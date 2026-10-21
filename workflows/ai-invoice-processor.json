@@ -1,0 +1,531 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "YOUR_INVOICES_LABEL_ID"
+          ]
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1232,
+        336
+      ],
+      "id": "405ef570-a1aa-418a-8d05-2b613a009403",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1040,
+        336
+      ],
+      "id": "4662293d-acfc-4c35-ab16-4b2eca2799a3",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Invoices",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "vendor": "={{ $('Information Extractor').item.json.output.vendor }}",
+            "invoice_no": "={{ $('Information Extractor').item.json.output.invoice_no }}",
+            "invoice_date": "={{ $('Information Extractor').item.json.output.invoice_date }}",
+            "billed_to": "={{ $('Information Extractor').item.json.output.billed_to }}",
+            "subtotal": "={{ $('Information Extractor').item.json.output.subtotal }}",
+            "gst": "={{ $('Information Extractor').item.json.output.gst }}",
+            "total": "={{ $('Information Extractor').item.json.output.total }}",
+            "status": "={{ Math.abs($('Information Extractor').item.json.output.subtotal + $('Information Extractor').item.json.output.gst - $('Information Extractor').item.json.output.total) <= 1 ? 'processed' : 'needs review' }}",
+            "file_name": "={{ $('Gmail Trigger').item.binary.attachment_0.fileName }}",
+            "received_at": "={{ $now.toFormat('dd-MM-yyyy HH:mm') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "received_at",
+              "displayName": "received_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "vendor",
+              "displayName": "vendor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "invoice_no",
+              "displayName": "invoice_no",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "invoice_date",
+              "displayName": "invoice_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "billed_to",
+              "displayName": "billed_to",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "subtotal",
+              "displayName": "subtotal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "gst",
+              "displayName": "gst",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -208,
+        496
+      ],
+      "id": "b8969dd4-786b-48af-8283-35092d25e824",
+      "name": "Append invoice",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "vendor",
+              "description": "Company that issued the invoice",
+              "required": true
+            },
+            {
+              "name": "invoice_no",
+              "description": "Invoice or bill number exactly as written",
+              "required": true
+            },
+            {
+              "name": "invoice_date",
+              "description": "Invoice date in YYYY-MM-DD format"
+            },
+            {
+              "name": "billed_to",
+              "description": "Customer the invoice is addressed to"
+            },
+            {
+              "name": "subtotal",
+              "type": "number",
+              "description": "Amount before tax, digits only"
+            },
+            {
+              "name": "gst",
+              "type": "number",
+              "description": "Tax amount, digits only"
+            },
+            {
+              "name": "total",
+              "type": "number",
+              "description": "Final amount payable, digits only",
+              "required": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        -880,
+        336
+      ],
+      "id": "14002200-6ecf-44bc-8535-8e83ad90e114",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        496
+      ],
+      "id": "8e3a4a8d-a5a8-487e-9afd-4a83ea01dd6a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Invoices",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "invoice_no",
+              "lookupValue": "={{ $json.output.invoice_no }}"
+            },
+            {
+              "lookupColumn": "vendor",
+              "lookupValue": "={{ $json.output.vendor }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -592,
+        336
+      ],
+      "id": "dd639d0a-0bf8-4143-a866-bcf4b1deb28a",
+      "name": "Check duplicate",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a9fab8da-501d-4f5d-b2c7-880bab574034",
+              "leftValue": "={{ $json.invoice_no }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -400,
+        336
+      ],
+      "id": "f3eaed3e-c003-4b0e-b694-1394d5c99340",
+      "name": "Is duplicate?"
+    },
+    {
+      "parameters": {
+        "sendTo": "you@example.com",
+        "subject": "=⚠️ Duplicate invoice: {{ $('Information Extractor').item.json.output.invoice_no }}",
+        "message": "=Duplicate invoice received and NOT added.  \nVendor: {{ $('Information Extractor').item.json.output.vendor }}\nInvoice: {{ $('Information Extractor').item.json.output.invoice_no }} \nTotal: ₹{{ $('Information Extractor').item.json.output.total }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -192,
+        272
+      ],
+      "id": "98a58ef8-c4a5-4ed2-8987-9d3b757cb87b",
+      "name": "Duplicate alert",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7eb82a2d-1157-44c8-a047-15dd1a20190c",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "needs review",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -16,
+        528
+      ],
+      "id": "3a123a0a-65c0-4305-80af-0b36146504a5",
+      "name": "Needs review?"
+    },
+    {
+      "parameters": {
+        "sendTo": "you@example.com",
+        "subject": "=Invoice needs review: {{ $json.invoice_no }}",
+        "message": "=Totals don't add up. Subtotal ₹{{ $json.subtotal }} + GST ₹{{ $json.gst }} ≠ Total ₹{{ $json.total }}. Please check before paying.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        448
+      ],
+      "id": "8f7121b8-7faf-483e-a35d-e11fbbc2a835",
+      "name": "Review alert",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append invoice": {
+      "main": [
+        [
+          {
+            "node": "Needs review?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Check duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check duplicate": {
+      "main": [
+        [
+          {
+            "node": "Is duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Duplicate alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs review?": {
+      "main": [
+        [
+          {
+            "node": "Review alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "name": "AI Invoice Processor"
+}
