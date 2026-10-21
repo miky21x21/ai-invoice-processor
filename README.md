@@ -4,7 +4,17 @@
 
 Built for small businesses and accounts teams that receive invoices as PDF attachments from many suppliers, each with its own layout, and still type them into a spreadsheet by hand.
 
-📺 **Build series on YouTube:** [AI Invoice Processor playlist](https://www.youtube.com/@MitchellSwapnil)
+## 📺 Build series on YouTube
+
+[![Day 1: Reading invoices from Gmail](https://img.youtube.com/vi/LI7siOOMabk/maxresdefault.jpg)](https://www.youtube.com/live/LI7siOOMabk)
+
+| Episode | Topic |
+|---|---|
+| [Day 1](https://www.youtube.com/live/LI7siOOMabk) | Gmail filter, Gmail Trigger, reading the PDF |
+| Day 2 | AI extraction with Gemini → Google Sheets *(coming soon)* |
+| Day 3 | Duplicate and totals checks with email alerts *(coming soon)* |
+
+More on the channel: [@MitchellSwapnil](https://www.youtube.com/@MitchellSwapnil)
 
 ---
 
@@ -28,13 +38,30 @@ Built for small businesses and accounts teams that receive invoices as PDF attac
 5. **Checks the maths.** If `subtotal + GST` doesn't equal the total (±₹1 for rounding), the row is saved with status `needs review` and the owner gets a 🔍 *Needs review* email.
 6. **Logs everything.** Clean rows land in the **Invoices** sheet with the received time and source file name.
 
+## Workflow diagram
+
+```mermaid
+flowchart LR
+    A["📧 Gmail Trigger<br/>label: Invoices"] --> B["📄 Extract from File<br/>PDF → text"]
+    B --> C["🤖 Information Extractor<br/>Google Gemini"]
+    C --> D["🔎 Check duplicate<br/>Sheets lookup:<br/>vendor + invoice_no"]
+    D --> E{"Is duplicate?"}
+    E -- yes --> F["⚠️ Duplicate alert<br/>email, nothing saved"]
+    E -- no --> G[("📊 Append invoice<br/>Google Sheets")]
+    G --> H{"Needs review?<br/>subtotal + GST ≠ total"}
+    H -- yes --> I["🔍 Review alert<br/>email"]
+    H -- no --> J(["✅ Done"])
 ```
-Gmail Trigger → Extract from File → Information Extractor (Gemini)
-  → Check duplicate → Is duplicate?
-       ├─ yes → Duplicate alert (email)
-       └─ no  → Append invoice → Needs review?
-                                  └─ yes → Review alert (email)
-```
+
+| Node | Role |
+|---|---|
+| Gmail Trigger | Polls every minute for new emails with the **Invoices** label, downloads the PDF |
+| Extract from File | Converts the PDF attachment to plain text |
+| Information Extractor + Gemini | Pulls 7 fields from the text, whatever the layout |
+| Check duplicate | Looks up the same vendor + invoice number in the sheet |
+| Is duplicate? | Routes resends to an alert instead of the sheet |
+| Append invoice | Saves the row with `processed` or `needs review` status |
+| Needs review? | Emails the owner when the totals don't add up |
 
 ---
 
